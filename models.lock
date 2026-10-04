@@ -1,0 +1,10 @@
+# The fixed parser weights (DD-07 §2, security.md supply chain): one
+# Hugging Face repository at an exact revision and the SHA-256 of every
+# file the parser loads. The image build downloads exactly these and fails
+# on any difference; nothing is downloaded at run time (HF_HUB_OFFLINE=1).
+# repository revision license
+docling-project/docling-layout-heron 8f39ad3c0b4c58e9c2d2c84a38465abf757272d8 apache-2.0
+# sha256 path (under docling-project--docling-layout-heron/)
+00333a43451945aaf89db8ca9c0a17e75d1537c17db60fdb91aa95f4c7929e0c model.safetensors
+fdea30805ce2f5666b147fca941dcdd27ad468e27d6ed21902207d3da056a97d config.json
+cd38cd59999e7a95d68e487fbe5132df3d4e5c32a0836add57e6126ba0c4eaf1 preprocessor_config.json
