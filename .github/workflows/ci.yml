@@ -1,0 +1,25 @@
+# Independent verification of the anvilkit-parser Job image from this
+# repository alone: the image (the contract schema jobs/job.schema.json from a
+# checkout of the contracts repository at the commit the parent pins: 063f91f,
+# tag go/v0.1.4; the hash-locked dependencies and the layout weights of
+# models.lock fetched and verified at build) and the tests inside that image
+# with no network on a read-only root (real Docling conversions with the
+# pinned weights, every guard, the stager against a local HTTP server).
+name: ci
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+jobs:
+  image:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: ancyloce/anvilkit-agent-contracts
+          ref: 063f91f2bfa2cdb46403638d3e3d23dfcc956303
+          path: contracts
+      - run: docker build --build-context contracts=contracts -t anvilkit-parser:ci .
+      - run: docker run --rm --network none --read-only --tmpfs /tmp --entrypoint /opt/venv/bin/python -w /opt/anvilkit anvilkit-parser:ci -m unittest discover -s tests
