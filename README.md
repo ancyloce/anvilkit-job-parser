@@ -20,4 +20,4 @@ The stagers run `python -I -B -u -m anvilkit_parser.stage` (`bin/anvilkit-stage`
 
 ## Repository
 
-This Job image is the repository `anvilkit-job-parser` (the image and the Python package keep the name `anvilkit-parser`), mounted in the parent `anvilkit-services` as the submodule `jobs/parser`. It keeps no contract definitions of its own: `jobs/job.schema.json` comes from the contracts repository as the image's named `contracts` build context. CI (`.github/workflows/ci.yml`) checks out that repository at the commit the parent pins (`7d53c8e`, tag `go/v0.1.8`), builds the image and runs the tests inside it with no network.
+This Job image is the repository `anvilkit-job-parser` (the image and the Python package keep the name `anvilkit-parser`), mounted in the parent `anvilkit-services` as the submodule `jobs/parser`. It keeps no contract definitions of its own: `jobs/job.schema.json` comes from the contracts repository as the image's named `contracts` build context. CI (`.github/workflows/ci.yml`) checks out that repository at the commit the parent pins (`1307fb2`, tag `go/v0.1.9`), builds the image and runs the tests inside it with no network.
