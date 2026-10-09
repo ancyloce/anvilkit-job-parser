@@ -1,2 +1,3 @@
 #!/bin/sh
-exec /opt/venv/bin/python -m anvilkit_parser.parse "$@"
+# P0.7: the current directory is never on sys.path (-P; PYTHONSAFEPATH too).
+exec /opt/venv/bin/python -P -m anvilkit_parser.parse "$@"

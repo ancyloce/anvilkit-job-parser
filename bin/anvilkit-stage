@@ -1,2 +1,4 @@
 #!/bin/sh
-exec /opt/venv/bin/python -m anvilkit_parser.stage "$@"
+# P0.7: isolated mode (-I: no PYTHON* environment, no user site, no current or
+# script directory on sys.path), no bytecode writes (-B), unbuffered (-u).
+exec /opt/venv/bin/python -I -B -u -m anvilkit_parser.stage "$@"
