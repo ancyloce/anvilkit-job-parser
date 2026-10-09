@@ -12,9 +12,12 @@ import http.server
 import io
 import json
 import os
+import re
+import subprocess
 import tempfile
 import threading
 import unittest
+import urllib.error
 import zipfile
 from pathlib import Path
 
@@ -331,6 +334,49 @@ class StageTest(unittest.TestCase):
             stage.stage_in(env, self.url_file("/in"), self.tmp / "source3")
         self.assertFalse((self.tmp / "source3").exists())
 
+    def test_a_redirect_is_never_followed(self) -> None:
+        hits: list[str] = []
+
+        class Redirect(http.server.BaseHTTPRequestHandler):
+            def do_GET(self) -> None:  # noqa: N802
+                hits.append(self.path)
+                self.send_response(302)
+                self.send_header("Location", "/elsewhere")
+                self.end_headers()
+
+            def log_message(self, *args: object) -> None:
+                pass
+
+        srv = http.server.ThreadingHTTPServer(("127.0.0.1", 0), Redirect)
+        threading.Thread(target=srv.serve_forever, daemon=True).start()
+        try:
+            f = self.tmp / "redirect"
+            f.write_text(f"http://127.0.0.1:{srv.server_address[1]}/in")
+            with self.assertRaises(urllib.error.HTTPError):
+                stage.stage_in(contract.Envelope(envelope(b"x", "text/plain")), f, self.tmp / "source")
+            self.assertEqual(hits, ["/in"], "the redirect target was never requested")
+        finally:
+            srv.shutdown()
+
+    def test_stage_out_reads_only_a_regular_file(self) -> None:
+        """P0.7: the parser owns /stage/out: a link (to the URL files) or a FIFO
+        planted at the result path is refused without blocking."""
+        data = b"# doc\n"
+        env = contract.Envelope(envelope(data, "text/markdown"))
+        limits = contract.Limits(LIMITS)
+        secret = self.tmp / "put-url"
+        secret.write_text(json.dumps({"launchKey": env.launch_key, "verdict": "parsed"}))
+        link = self.tmp / "link.json"
+        link.symlink_to(secret)
+        with self.assertRaises(stage.StageError):
+            stage.stage_out(env, limits, self.url_file("/out-link"), link)
+        fifo = self.tmp / "fifo.json"
+        os.mkfifo(fifo)
+        with self.assertRaises(stage.StageError):
+            stage.stage_out(env, limits, self.url_file("/out-fifo"), fifo)
+        self.assertNotIn("/out-link", self.stored)
+        self.assertNotIn("/out-fifo", self.stored)
+
     def test_stage_out_uploads_bounded_result_of_this_launch(self) -> None:
         data = b"# doc\n"
         env = contract.Envelope(envelope(data, "text/markdown"))
@@ -346,6 +392,58 @@ class StageTest(unittest.TestCase):
             stage.stage_out(env, limits, self.url_file("/out2"), src)
         with self.assertRaises(stage.StageError):
             stage.stage_out(env, contract.Limits({**LIMITS, "maxOutputBytes": 10}), self.url_file("/out3"), src)
+
+
+WRAPPER = Path("/usr/local/bin/anvilkit-stage")
+
+
+@unittest.skipUnless(WRAPPER.exists() and Path("/opt/venv/bin/python").exists(), "the image's stager wrapper and venv (run inside the image)")
+class StagerIsolationTest(unittest.TestCase):
+    """P0.7 (PAR-01): a module planted in any directory the parser container can
+    write (the shared directories, the stager's HOME and TMPDIR, its working
+    directory) or named by the PYTHON* environment is never imported by the
+    trusted stager, and no entry of its import path is writable."""
+
+    def plant(self, root: Path, marker: Path) -> None:
+        body = f"open({str(marker)!r}, 'a').write({str(root)!r} + '\\n')\n"
+        (root / "hashlib.py").write_text(body + "raise ImportError('planted')\n")
+        pkg = root / "anvilkit_parser"
+        pkg.mkdir()
+        (pkg / "__init__.py").write_text(body)
+        (pkg / "stage.py").write_text(body)
+        (pkg / "contract.py").write_text(body)
+        (root / "sitecustomize.py").write_text(body)
+        (root / "usercustomize.py").write_text(body)
+
+    def test_planted_modules_are_never_imported(self) -> None:
+        with tempfile.TemporaryDirectory() as d:
+            base = Path(d)
+            marker = base / "marker"
+            dirs = {name: base / name for name in ("cwd", "home", "tmpdir", "pythonpath")}
+            for path in dirs.values():
+                path.mkdir()
+                self.plant(path, marker)
+            startup = base / "startup.py"
+            startup.write_text(f"open({str(marker)!r}, 'a').write('PYTHONSTARTUP\\n')\n")
+            env = {"PATH": "/usr/bin:/bin", "HOME": str(dirs["home"]), "TMPDIR": str(dirs["tmpdir"]),
+                   "PYTHONPATH": str(dirs["pythonpath"]), "PYTHONSTARTUP": str(startup), "PYTHONUSERBASE": str(dirs["home"]),
+                   "PYTHONINSPECT": "1"}
+            # The real wrapper, with an argument that stops after every import ran.
+            p = subprocess.run([str(WRAPPER), "neither"], cwd=dirs["cwd"], env=env, capture_output=True, text=True, timeout=120)
+            self.assertEqual(p.returncode, 2, p.stderr)
+            self.assertIn("usage: anvilkit-stage in|out", p.stderr)
+            self.assertFalse(marker.exists(), "a planted module was imported: " + (marker.read_text() if marker.exists() else ""))
+            # The same interpreter flags as the wrapper's exec line: the import path.
+            flags = re.search(r"exec /opt/venv/bin/python((?: -[A-Za-z]+)*) -m anvilkit_parser\.stage", WRAPPER.read_text())
+            self.assertIsNotNone(flags, "the wrapper's exec line")
+            argv = ["/opt/venv/bin/python", *flags.group(1).split(), "-c", "import json, sys; print(json.dumps(sys.path))"]
+            path = json.loads(subprocess.run(argv, cwd=dirs["cwd"], env=env, capture_output=True, text=True, check=True, timeout=60).stdout)
+            self.assertNotIn("", path)
+            for entry in path:
+                self.assertFalse(any(entry.startswith(str(x)) for x in [*dirs.values(), base]), f"{entry} is a planted directory")
+                if os.path.exists(entry):
+                    self.assertFalse(os.access(entry, os.W_OK), f"{entry} is writable by the stager's user")
+            self.assertIn("/opt/anvilkit/src", path, "the package comes from the image's read-only sources")
 
 
 if __name__ == "__main__":
