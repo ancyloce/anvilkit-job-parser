@@ -5,7 +5,7 @@ description = "Parser Job of the AnvilKit Agent platform (DD-07 §2, delivery.md
 requires-python = ">=3.12,<3.13"
 # Exact, hash-pinned versions live in requirements.lock (uv pip compile
 # --generate-hashes); the image installs that lock with --require-hashes.
-dependencies = ["docling==2.130.0", "jsonschema==4.25.1"]
+dependencies = ["docling==2.132.0", "jsonschema==4.25.1"]
 
 [project.scripts]
 anvilkit-parse = "anvilkit_parser.parse:main"
