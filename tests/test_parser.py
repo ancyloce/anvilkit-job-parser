@@ -28,7 +28,7 @@ DOCX = guards.DOCX
 
 LIMITS = {
     "parserName": "docling",
-    "parserVersion": "2.130.0",
+    "parserVersion": "2.132.0",
     "mediaTypes": ["application/pdf", "text/plain", "text/markdown", "text/html", DOCX],
     "maxInputBytes": 4 << 20,
     "maxPages": 20,
