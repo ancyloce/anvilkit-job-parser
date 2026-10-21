@@ -1,0 +1,10 @@
+# Overrides of declared constraints, applied by `uv pip compile --override
+# overrides.txt` (requirements.lock's header names it).
+#
+# pillow 13.0.0 fixes CVE-2026-112403 (CRITICAL) and CVE-2026-112397,
+# CVE-2026-112400, CVE-2026-112404, CVE-2026-112895, CVE-2026-112896 and
+# CVE-2026-112897 (HIGH) of 12.3.0; there is no fixed 12.x release.
+# docling-slim declares pillow<13, and no docling release allows 13 yet
+# (checked 2026-10-21 through docling 2.141.0). The parser's tests on real
+# documents run against this override. Remove it once docling allows 13.
+pillow==13.0.0
