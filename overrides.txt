@@ -8,3 +8,8 @@
 # (checked 2026-10-21 through docling 2.141.0). The parser's tests on real
 # documents run against this override. Remove it once docling allows 13.
 pillow==13.0.0
+
+# filelock 4.2.1 fixes CVE-2026-112940 (HIGH) of 4.0.5 (found by the job-images
+# publication scan, 2026-10-26); huggingface-hub and torch declare no upper bound.
+# 4.2.4 is the release the inference service's lock already carries.
+filelock==4.2.4
