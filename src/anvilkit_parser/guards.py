@@ -66,7 +66,7 @@ def _unsafe_name(name: str) -> bool:
 
 
 def check_archive(data: bytes, max_entries: int, max_expanded: int, max_ratio: int) -> None:
-    """Bounds a ZIP container before any member is decompressed."""
+    """Bounds a ZIP container by its directory before any member is decompressed, then by reading every member back."""
     try:
         zf = zipfile.ZipFile(BytesIO(data))
     except zipfile.BadZipFile as err:
