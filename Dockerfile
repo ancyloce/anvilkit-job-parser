@@ -36,7 +36,7 @@ FROM ${PYTHON_IMAGE}
 # CVE-2026-41992 gzip, CVE-2026-86145/89157/89161/103111 libpcre2,
 # CVE-2026-11822/11824 SQLite, CVE-2026-4878 libcap2,
 # CVE-2026-53612/53613/53614/53615 util-linux, CVE-2026-109518 apt and its
-# libapt-pkg), pinned to the fixed versions; the build stage and its weights
+# libapt-pkg, CVE-2026-76844/85091 zlib1g (B-013)), pinned to the fixed versions; the build stage and its weights
 # are unaffected.
 RUN apt-get update \
  && apt-get install -y --no-install-recommends --only-upgrade libssl3t64=3.5.7-1~deb13u3 openssl=3.5.7-1~deb13u3 \
@@ -44,7 +44,7 @@ RUN apt-get update \
       gzip=1.13-1+deb13u1 libpcre2-8-0=10.46-1~deb13u3 libsqlite3-0=3.46.1-7+deb13u2 libcap2=1:2.75-10+deb13u1+b3 \
       bsdutils=1:2.41.5-0+deb13u1 libblkid1=2.41.5-0+deb13u1 liblastlog2-2=2.41.5-0+deb13u1 libmount1=2.41.5-0+deb13u1 \
       libsmartcols1=2.41.5-0+deb13u1 libuuid1=2.41.5-0+deb13u1 login=1:4.16.0-2+really2.41.5-0+deb13u1 \
-      mount=2.41.5-0+deb13u1 util-linux=2.41.5-0+deb13u1 apt=3.0.4 libapt-pkg7.0=3.0.4 \
+      mount=2.41.5-0+deb13u1 util-linux=2.41.5-0+deb13u1 apt=3.0.4 libapt-pkg7.0=3.0.4 zlib1g=1:1.3.dfsg+really1.3.1-1+deb13u1 \
  && rm -rf /var/lib/apt/lists/*
 COPY --from=build /opt/venv /opt/venv
 COPY --from=build /opt/docling-models /opt/docling-models
