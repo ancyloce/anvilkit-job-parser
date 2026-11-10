@@ -12,7 +12,7 @@ The stagers run `python -I -B -u -m anvilkit_parser.stage` (`bin/anvilkit-stage`
 
 ## Inputs
 
-`requirements.lock` is the hash-pinned dependency set (`uv pip compile --generate-hashes --override overrides.txt`, CPU torch 2.14.0; `overrides.txt` lifts pillow to 13.0.0 past docling's declared `<13` for its CVE fixes, until a docling release allows it), installed with `--require-hashes`; `models.lock` pins the layout weights by revision and per-file SHA-256, fetched once at build (`bin/fetch-models.py`); the contract schema comes from the contracts repository (named build context).
+`requirements.lock` is the hash-pinned dependency set (`uv pip compile --generate-hashes --override overrides.txt`, CPU torch 2.14.0; `overrides.txt` lifts pillow to 13.0.0 past docling's declared `<13` for its CVE fixes, until a docling release allows it, and pins filelock to 4.2.4 for a HIGH CVE fixed since 4.2.1), installed with `--require-hashes`; `models.lock` pins the layout weights by revision and per-file SHA-256, fetched once at build (`bin/fetch-models.py`); the contract schema comes from the contracts repository (named build context).
 
 ## Checks
 
@@ -20,4 +20,4 @@ The stagers run `python -I -B -u -m anvilkit_parser.stage` (`bin/anvilkit-stage`
 
 ## Repository
 
-This Job image is the repository `anvilkit-job-parser` (the image and the Python package keep the name `anvilkit-parser`), mounted in the parent `anvilkit-services` as the submodule `jobs/parser`. It keeps no contract definitions of its own: `jobs/job.schema.json` comes from the contracts repository as the image's named `contracts` build context. CI (`.github/workflows/ci.yml`) checks out that repository at the commit the parent pins (`1c3ef95`, tag `go/v0.1.10`), builds the image and runs the tests inside it with no network.
+This Job image is the repository `anvilkit-job-parser` (the image and the Python package keep the name `anvilkit-parser`), mounted in the parent `anvilkit-services` as the submodule `jobs/parser`. It keeps no contract definitions of its own: `jobs/job.schema.json` comes from the contracts repository as the image's named `contracts` build context. CI (`.github/workflows/ci.yml`) checks out that repository at the commit its checkout step pins (`b3fe869`, tag `go/v0.1.18`; not necessarily the contracts commit the parent's gitlink records), builds the image and runs the tests inside it with no network.
