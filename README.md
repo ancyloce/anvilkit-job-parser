@@ -12,7 +12,7 @@ The stagers run `python -I -B -u -m anvilkit_parser.stage` (`bin/anvilkit-stage`
 
 ## Inputs
 
-`requirements.lock` is the hash-pinned dependency set (`uv pip compile --generate-hashes --override overrides.txt`, CPU torch 2.14.0; `overrides.txt` lifts pillow to 13.0.0 past docling's declared `<13` for its CVE fixes, until a docling release allows it, and pins filelock to 4.2.4 for a HIGH CVE fixed since 4.2.1), installed with `--require-hashes`; `models.lock` pins the layout weights by revision and per-file SHA-256, fetched once at build (`bin/fetch-models.py`); the contract schema comes from the contracts repository (named build context).
+`requirements.lock` is the hash-pinned dependency set (`uv pip compile --generate-hashes --override overrides.txt`, CPU torch 2.14.0; `overrides.txt` lifts pillow to 13.0.0 past docling's declared `<13` for its CVE fixes, until a docling release allows it, and pins filelock to 4.2.4 and soupsieve to 4.1 for HIGH CVEs fixed since 4.2.1 and 4.0.0), installed with `--require-hashes`; `models.lock` pins the layout weights by revision and per-file SHA-256, fetched once at build (`bin/fetch-models.py`); the contract schema comes from the contracts repository (named build context).
 
 ## Checks
 
